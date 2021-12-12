@@ -1,6 +1,5 @@
 package com.example.bomberman.entities;
 
-import com.example.bomberman.GameScene;
 import com.example.bomberman.MainGameScene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -8,7 +7,8 @@ import com.example.bomberman.graphics.Sprite;
 
 
 public abstract class Entity {
-    public Entity() {
+    public Entity(MainGameScene gameScene) {
+        this.gameScene = gameScene;
     }
 
     protected double x;
@@ -25,7 +25,16 @@ public abstract class Entity {
     //Tọa độ X tính từ góc trái trên trong Canvas
 
     protected Image img;
-    public MainGameScene gameScene;
+
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public final MainGameScene gameScene;
 
 
     public int getXunit() {

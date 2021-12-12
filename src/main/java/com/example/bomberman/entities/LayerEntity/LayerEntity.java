@@ -1,13 +1,19 @@
-package com.example.bomberman.entities;
+package com.example.bomberman.entities.LayerEntity;
 
 import com.example.bomberman.MainGameScene;
+import com.example.bomberman.entities.Entity;
 import com.example.bomberman.graphics.Sprite;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 
-public class Item extends LayerEntity {
+public abstract class LayerEntity extends Entity {
+    protected int layer = 0;
+    protected Image[] images = {
+            Sprite.brick.getFxImage(),
+            img
+    };
 
-    public Item(int xUnit, int yUnit, Image img, MainGameScene gameScene) {
+    public LayerEntity(int xUnit, int yUnit, Image img, MainGameScene gameScene) {
         super(xUnit, yUnit, img, gameScene);
     }
 
@@ -21,14 +27,6 @@ public class Item extends LayerEntity {
         if (layer == 0) {
             layer += 1;
         }
-    }
-
-    @Override
-    public boolean collision(Entity e) {
-        if(e instanceof Bomber){
-            return true;
-        }
-        return false;
     }
 
     @Override

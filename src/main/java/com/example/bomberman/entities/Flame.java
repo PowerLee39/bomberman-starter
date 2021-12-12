@@ -1,6 +1,5 @@
 package com.example.bomberman.entities;
 
-import com.example.bomberman.GameScene;
 import com.example.bomberman.MainGameScene;
 import com.example.bomberman.graphics.Sprite;
 import javafx.animation.Animation;
@@ -38,9 +37,10 @@ public class Flame extends Entity {
     }
 
     public Flame(int xUnit, int yUnit,MainGameScene gameScene, String type) {
+        super(gameScene);
         this.x = xUnit * Sprite.SCALED_SIZE;
         this.y = yUnit * Sprite.SCALED_SIZE;
-        this.gameScene = gameScene;
+//        this.gameScene = gameScene;
         isDestroy = false;
         switch (type) {
             case "left":

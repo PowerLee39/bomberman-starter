@@ -60,6 +60,7 @@ public class BombermanGame extends Application {
 
 
     public void update() {
+        currentScene.update();
     }
 
     public void render() {

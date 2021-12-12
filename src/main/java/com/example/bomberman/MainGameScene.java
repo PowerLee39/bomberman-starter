@@ -1,15 +1,22 @@
 package com.example.bomberman;
 
 import com.example.bomberman.entities.*;
+import com.example.bomberman.entities.Enemy.Balloon;
+import com.example.bomberman.entities.Enemy.Enemy;
+import com.example.bomberman.entities.LayerEntity.*;
 import com.example.bomberman.graphics.Sprite;
 import com.example.bomberman.player.Player;
-import javafx.animation.Animation;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,15 +38,20 @@ public class MainGameScene extends GameScene {
     private Entity[][] stillObjectMap;
     private List<Bomb> bombList = new ArrayList<>();
     public List<Flame> flames = new ArrayList<>();
+    public List<Enemy> enemies = new ArrayList<>();
+    private boolean gameOver;
+    private Text gameOverText = new Text("Game Over");
 
 
     public MainGameScene(Group root, GraphicsContext gc, Canvas canvas) {
         super(root, gc, canvas);
+        gameOver = false;
     }
 
     public MainGameScene(Group root, GraphicsContext gc, Canvas canvas, BombermanGame gameController) {
         super(root, gc, canvas);
         this.gameController = gameController;
+        gameOver = false;
         init();
     }
 
@@ -120,14 +132,16 @@ public class MainGameScene extends GameScene {
                     case 'p': {
                         // main character: Bomber
                         bomber = new Bomber(j, i, Sprite.player_right_2.getFxImage(), this);
-                        stillObjectMap[i][j] = new Grass(j, i, Sprite.grass.getFxImage(), this);
+                        object = new Grass(j, i, Sprite.grass.getFxImage(), this);
+//                        stillObjectMap[i][j] = new Grass(j, i, Sprite.grass.getFxImage(), this);
                         break;
 
                     }
                     case '1': {
                         //  Ballon
-                        object = new Balloon(j, i, Sprite.balloom_left1.getFxImage(), this);
-
+                        Enemy e = new Balloon(j, i, Sprite.balloom_left1.getFxImage(), this);
+                        enemies.add(e);
+                        object = new Grass(j, i, Sprite.grass.getFxImage(), this);
                         break;
 
                     }
@@ -189,28 +203,77 @@ public class MainGameScene extends GameScene {
         init();
     }
 
-    @Override
-    public void update() {
-        flames.forEach(f -> {
-            if (f.isDestroy) {
-                flames.remove(f);
-            }
-        });
+    public boolean collider(Rectangle r1, Rectangle r2) {
+
+        if (r1.intersects(r2)) {
+            return true;
+        }
+        return false;
     }
 
+    @Override
+    public void update() {
+        for (int i = 0; i < flames.size(); i++) {
+            if (flames.get(i).isDestroy) {
+                flames.remove(flames.get(i));
+            }
+        }
+        for (int i = 0; i < enemies.size(); i++) {
+            if (!enemies.get(i).isLiving()) {
+                enemies.remove(enemies.get(i));
+            }
+        }
+        if (!gameOver) {
+            for (int i = 0; i < stillObjects.size(); i++) {
+                Entity e = stillObjects.get(i);
+                if (e instanceof Item) {
+                    Rectangle r1 = new Rectangle((int) bomber.getX(), (int) bomber.getY(), Sprite.SCALED_SIZE, Sprite.SCALED_SIZE);
+                    Rectangle r2 = new Rectangle((int) e.getX(), (int) e.getY(), Sprite.SCALED_SIZE, Sprite.SCALED_SIZE);
+                    if (collider(r1, r2)) {
+                        e.collision(bomber);
+                    }
+                }
+            }
+            for (int i = 0; i < enemies.size(); i++) {
+                enemies.get(i).update();
+            }
+            for (int i = 0; i < flames.size(); i++) {
+                Flame f = flames.get(i);
+                Rectangle r2 = new Rectangle((int) f.getX(), (int) f.getY(), Sprite.SCALED_SIZE, Sprite.SCALED_SIZE);
+                for (int j = 0; j < enemies.size(); j++) {
+                    Enemy e = enemies.get(j);
+                    Rectangle r1 = new Rectangle((int) e.getX(), (int) e.getY(), Sprite.SCALED_SIZE, Sprite.SCALED_SIZE);
 
 
-    public boolean canMove(double x, double y) {
-        // x,y is real pixel
-        int xUnit = (int) Math.round(x / Sprite.SCALED_SIZE);
-        int yUnit = (int) Math.round(y / Sprite.SCALED_SIZE);
-        if (xUnit < 0 || xUnit >= WIDTH) {
-            return false;
+                    if (e.isLiving() && collider(r1, r2)) {
+                        e.destroy();
+                    }
+                }
+                Rectangle r1 = new Rectangle((int) bomber.getX() + Sprite.SCALED_SIZE / 4, (int) bomber.getY() + Sprite.SCALED_SIZE / 4, Sprite.SCALED_SIZE / 3, Sprite.SCALED_SIZE / 3);
+
+                if (collider(r1, r2)) {
+                    bomber.destroy();
+                    gameOver();
+                }
+            }
         }
-        if (yUnit < 0 || yUnit >= HEIGHT) {
-            return false;
-        }
-        Entity obj = stillObjectMap[yUnit][xUnit];
+
+    }
+
+    private void gameOver() {
+        gameOver = true;
+
+
+        //setting the position of the text
+        gameOverText.setX(WIDTH / 2);
+        gameOverText.setY(HEIGHT / 2);
+
+
+        gameOverText.setFont(Font.font("verdana", FontWeight.BOLD, FontPosture.REGULAR, 20));
+
+    }
+
+    public boolean canMove(Entity obj) {
         if (obj instanceof Wall) {
             return false;
         }
@@ -262,9 +325,6 @@ public class MainGameScene extends GameScene {
     }
 
 
-
-
-
     public void destroyAt(int xUnit, int yUnit) {
         Entity e = getAt(xUnit, yUnit);
         if (e instanceof Item) {
@@ -284,6 +344,10 @@ public class MainGameScene extends GameScene {
         }
     }
 
+    public void deleteEnemy(Enemy e) {
+        enemies.remove(e);
+    }
+
     public void setGrass(int xUnit, int yUnit) {
         Entity o = getAt(xUnit, yUnit);
         stillObjects.remove(o);
@@ -296,7 +360,6 @@ public class MainGameScene extends GameScene {
     public void render() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         stillObjects.forEach(entity -> entity.render(gc));
-        entities.forEach(g -> g.render(gc));
         bombList.forEach(bomb -> {
             if (!bomb.isDestroy)
                 bomb.render(gc);
@@ -306,9 +369,22 @@ public class MainGameScene extends GameScene {
             if (!f.isDestroy)
                 f.render(gc);
         });
+        enemies.forEach(enemy -> enemy.render(gc));
+        if (gameOver) {
+            Font fontLarge = Font.font("Droid Sans", FontWeight.BOLD, 70);
+            gc.setFont(fontLarge);
+            gc.fillText("Game Over",
+                    WIDTH * Sprite.SCALED_SIZE / 2 - 100, HEIGHT * Sprite.SCALED_SIZE / 2 - 100);
+        }
     }
 
     public Entity getAt(int xUnit, int yUnit) {
+        if (xUnit < 0 || xUnit >= WIDTH) {
+            return null;
+        }
+        if (yUnit < 0 || yUnit >= HEIGHT) {
+            return null;
+        }
         return stillObjectMap[yUnit][xUnit];
     }
 }

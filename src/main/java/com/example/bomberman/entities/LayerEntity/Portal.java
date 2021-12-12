@@ -1,6 +1,9 @@
-package com.example.bomberman.entities;
+package com.example.bomberman.entities.LayerEntity;
 
 import com.example.bomberman.MainGameScene;
+import com.example.bomberman.entities.Bomber;
+import com.example.bomberman.entities.Entity;
+import com.example.bomberman.entities.LayerEntity.LayerEntity;
 import javafx.scene.image.Image;
 
 public class Portal extends LayerEntity {

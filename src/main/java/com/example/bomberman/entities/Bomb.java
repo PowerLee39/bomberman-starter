@@ -14,22 +14,22 @@ public class Bomb extends Entity {
     private int spriteIndex = 0;
     private Animation spriteChangeAnim;
     private Animation countDown;
-    private int timeDestroy = 3;
+    private int timeDestroy = 2;
     public boolean isDestroy;
 
     public static final Image[] sprites = {
             Sprite.bomb.getFxImage(), Sprite.bomb_1.getFxImage(), Sprite.bomb_2.getFxImage(),
     };
     public Bomb(double x, double y, Image img, MainGameScene gameScene){
+        super(gameScene);
         this.x = x;
         this.y = y;
         this.img = img;
-        this.gameScene = gameScene;
     }
 
-    public Bomb(int xUnit, int yUnit, Image img, MainGameScene gameScene) {
+    public Bomb(int xUnit, int yUnit, Image img, MainGameScene gameScene,int destroyRadius) {
         super(xUnit, yUnit, img, gameScene);
-        destroyRadius = 1;
+        this.destroyRadius = destroyRadius;
         spriteIndex = 0;
         init();
     }
@@ -68,7 +68,9 @@ public class Bomb extends Entity {
         // sinh ra Flame
         for (int i = -destroyRadius; i < 0; i++) {
             Entity e = gameScene.getAt(getXunit() + i, getYunit());
-
+            if(e == null){
+                continue;
+            }
             // call e destroy
             if (!(e instanceof Wall)) {
                 addFlames(getXunit() + i, getYunit(), "left");
@@ -82,13 +84,16 @@ public class Bomb extends Entity {
         }
         for (int i = 1; i < destroyRadius + 1; i++) {
             Entity e = gameScene.getAt(getXunit() + i, getYunit());
+            if(e == null){
+                continue;
+            }
             if (!(e instanceof Wall)) {
                 addFlames(getXunit() + i, getYunit(), "right");
                 gameScene.destroyAt(getXunit()+i, getYunit());
             }
             e = gameScene.getAt(getXunit(), getYunit() + i);
             if (!(e instanceof Wall)) {
-                addFlames(getXunit(), getYunit() + 1, "down");
+                addFlames(getXunit(), getYunit() + i, "down");
                 gameScene.destroyAt(getXunit(), getYunit() + i);
             }
         }

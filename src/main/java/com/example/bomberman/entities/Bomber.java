@@ -1,6 +1,8 @@
 package com.example.bomberman.entities;
 
 import com.example.bomberman.MainGameScene;
+import com.example.bomberman.entities.Enemy.Balloon;
+import com.example.bomberman.entities.LayerEntity.LayerEntity;
 import com.example.bomberman.enums.Direction;
 import com.example.bomberman.graphics.Sprite;
 import javafx.scene.canvas.GraphicsContext;
@@ -15,7 +17,8 @@ public class Bomber extends MovingEntity {
     private double speed = 10;
     private int speedUp = 1;
     private List<Bomb> bombList;
-
+    private int destroyRadius = 1;
+    private int boomNumber = 50;
 
     @Override
     public void render(GraphicsContext gc) {
@@ -30,6 +33,7 @@ public class Bomber extends MovingEntity {
     public Bomber(int xUnit, int yUnit, Image img, MainGameScene gameScene) {
         super(xUnit, yUnit, img, gameScene);
         bombList = new ArrayList<>();
+        boomNumber = 50;
     }
 
     public void update() {
@@ -51,88 +55,108 @@ public class Bomber extends MovingEntity {
 
 
     public void plantBoom() {
-        int xUnit = getXunit();
-        int yUnit = getYunit();
-        if (canPlantBoom(xUnit, yUnit)) {
-            Bomb bomb = new Bomb(xUnit, yUnit, Sprite.bomb.getFxImage(), gameScene);
-            bombList.add(bomb);
+        if (boomNumber > 0) {
+            int xUnit = (int) Math.round(x / Sprite.SCALED_SIZE);
+            int yUnit = (int) Math.round(y/Sprite.SCALED_SIZE);
+            if (canPlantBoom(xUnit, yUnit)) {
+                Bomb bomb = new Bomb(xUnit, yUnit, Sprite.bomb.getFxImage(), gameScene, destroyRadius);
+                bombList.add(bomb);
+                boomNumber--;
+            }
         }
 
+    }
 
+    public void eatBoomItem() {
+        boomNumber += 5;
+    }
+
+    public void eatFlameItem() {
+        destroyRadius++;
+    }
+
+    public void eatSpeedItem() {
+        speed += 0.5;
     }
 
     public void moveLeft() {
         faceDir = Direction.left;
-        if (gameScene.canMove(x - speed, y)) {
-            int xUnit = getXunit();
-            if (gameScene.canMove((xUnit - 1) * Sprite.SCALED_SIZE, y)) {
-                x -= speed;
-            } else {
-                if (x - Sprite.SCALED_SIZE > (xUnit - 1) * Sprite.SCALED_SIZE) {
-                    x -= speed;
-                }
-            }
+        double xtmp = x - speed;
+        int xUnit = (int) Math.round(xtmp / Sprite.SCALED_SIZE);
+        Entity e = gameScene.getAt(xUnit, getYunit());
+        if (gameScene.canMove(e)) {
+            x -= speed;
+        } else {
+
+            x = (xUnit+1) *Sprite.SCALED_SIZE;
         }
+
     }
 
     public void moveRight() {
         faceDir = Direction.right;
-        if (gameScene.canMove(x + speed, y)) {
-            int xUnit = getXunit();
-            if (gameScene.canMove((xUnit + 1) * Sprite.SCALED_SIZE, y)) {
+        double xtmp = x + speed + Sprite.SCALED_SIZE;
+        int xUnit = (int) Math.round(xtmp / Sprite.SCALED_SIZE);
+        Entity e = gameScene.getAt(xUnit, getYunit());
+        if (gameScene.canMove(e)) {
+            x += speed;
+        } else {
+            if(xtmp > (xUnit * Sprite.SCALED_SIZE)){
+                x = (xUnit-1) * Sprite.SCALED_SIZE;
+            }else{
                 x += speed;
-            } else {
-                if (x + Sprite.SCALED_SIZE < (xUnit + 1) * Sprite.SCALED_SIZE) {
-                    x += speed;
-                }
             }
+//            x = x + speed - (xtmp - xUnit * Sprite.SCALED_SIZE) + 0.5;
+
         }
 
     }
 
     public void moveUp() {
-        faceDir = Direction.up;
-        if (gameScene.canMove(x, y - speed)) {
-            int yUnit = getYunit();
-            if (gameScene.canMove(x, (yUnit - 1) * Sprite.SCALED_SIZE)) {
-                y -= speed;
-            } else {
-                if (y - Sprite.SCALED_SIZE > (yUnit - 1) * Sprite.SCALED_SIZE) {
-                    y -= speed;
-                }
-            }
+        faceDir = Direction.down;
+        double ytmp = y - speed;
+        int yUnit = (int) Math.round(ytmp / Sprite.SCALED_SIZE);
+        Entity e = gameScene.getAt(getXunit(), yUnit);
+        if (gameScene.canMove(e)) {
+            y -= speed;
+        } else {
+            y = (yUnit+1) * Sprite.SCALED_SIZE;
         }
 
     }
 
     public void moveDown() {
         faceDir = Direction.down;
-        if (gameScene.canMove(x, y + speed)) {
-            int yUnit = getYunit();
-            if (gameScene.canMove(x, (yUnit + 1) * Sprite.SCALED_SIZE)) {
-                y += speed;
-            } else {
-                if (y + Sprite.SCALED_SIZE < (yUnit + 1) * Sprite.SCALED_SIZE) {
-                    y += speed;
-                }
-            }
+        double ytmp = y + speed + Sprite.SCALED_SIZE;
+        int yUnit = (int) Math.round(ytmp / Sprite.SCALED_SIZE);
+        Entity e = gameScene.getAt(getXunit(), yUnit);
+        if (gameScene.canMove(e)) {
+            y += speed;
+        } else {
+
+            y = y + speed - (ytmp - yUnit * Sprite.SCALED_SIZE) + 0.5;
+
         }
-
-
     }
 
     private boolean canPlantBoom(int xUnit, int yUnit) {
         Entity obj = gameScene.getAt(xUnit, yUnit);
         if (obj instanceof Grass) {
-           for(int i = 0; i < bombList.size(); i++){
-               int xb = bombList.get(i).getXunit();
-               int yb = bombList.get(i).getYunit();
-               if(xb == xUnit && yb == yUnit && bombList.get(i).isDestroy == false){
-                   return false;
-               }
+            for (int i = 0; i < bombList.size(); i++) {
+                int xb = bombList.get(i).getXunit();
+                int yb = bombList.get(i).getYunit();
+                if (xb == xUnit && yb == yUnit && bombList.get(i).isDestroy == false) {
+                    return false;
+                }
 
-           }
+            }
             return true;
+        } else {
+            if(obj instanceof Wall){
+                System.out.println("not plant boom in wall");
+            } else if(obj instanceof Brick){
+                System.out.println("not plant in brick + %d, %d".formatted(xUnit, yUnit));
+            }
         }
         return false;
     }
